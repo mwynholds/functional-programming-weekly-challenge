@@ -34,6 +34,29 @@ filterL = (fun, items) ->
 find = (fun, items) ->
   (filterL fun, items)[0] ? null
 
+pairs = (file) ->
+  fs = require 'fs'
+  contents = fs.readFileSync file, { encoding: 'ascii' }
+  memo = { last: null, pairs: {} }
+  words = contents.split /\s/
+  pairify = (item, memo) ->
+    item = item.toLowerCase().replace(/^\W*/, '').replace(/\W*$/, '').trim()
+    return memo if item == ''
+    #console.log "|#{item}|"
+    if memo.last == null
+      memo.last = item
+    else
+      pair = [memo.last, item].sort().join ':'
+      count = memo.pairs[pair] || 0
+      count += 1
+      memo.pairs[pair] = count
+      memo.last = item
+
+  (pairify item, memo) for item in words
+  result = ( { pair, count } for pair, count of memo.pairs )
+  result.sort (a, b) ->
+    b.count - a.count
+
 # assertions
 
 mc = (item, memo) -> memo.concat([item])
@@ -50,3 +73,6 @@ assertEqual find(e2, [1, 2, 3, 2]), 2
 assertEqual find(e2, [1, 3, 4, 5]), null
 
 console.log ''
+
+result = pairs './moby10b.txt'
+console.log result[0..2]
